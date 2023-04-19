@@ -1,24 +1,27 @@
 import request from '@/utils/request'
 
-export function login(data) {
+// 获取二维码登陆key
+export function getQrCodeLoginKey(query) {
   return request({
-    url: '/vue-admin-template/user/login',
-    method: 'post',
-    data
-  })
-}
-
-export function getInfo(token) {
-  return request({
-    url: '/vue-admin-template/user/info',
+    url: '/getQrCodeLoginKey',
     method: 'get',
-    params: { token }
+    params: query
   })
 }
 
-export function logout() {
+// 获取扫码登录数据
+export function getQRCodeLoginData(query) {
   return request({
-    url: '/vue-admin-template/user/logout',
-    method: 'post'
+    url: '/getQRCodeLoginData',
+    method: 'get',
+    params: query
+  })
+}
+
+export function logout(query) {
+  return request({
+    url: '/getQrCodeLoginKey',
+    method: 'get',
+    params: query
   })
 }

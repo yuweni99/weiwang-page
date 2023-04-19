@@ -1,89 +1,44 @@
 <template>
   <div class="login-container">
-    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
-
+    <div class="login-qrcode-container">
       <div class="title-container">
-        <h3 class="title">Login Form</h3>
+        <h3 class="title">微网单位平台</h3>
       </div>
+      <div class="qrcode-container">
+        <div v-if="qrCodeShowFlag" ref="qrCodeDiv" class="qrcode" />
 
-      <el-form-item prop="username">
-        <span class="svg-container">
-          <svg-icon icon-class="user" />
-        </span>
-        <el-input
-          ref="username"
-          v-model="loginForm.username"
-          placeholder="Username"
-          name="username"
-          type="text"
-          tabindex="1"
-          auto-complete="on"
-        />
-      </el-form-item>
+        <div v-show="expiresFlag" class="expire">
+          <el-button type="primary" icon="el-icon-refresh" @click="getQrCodeLoginKey">
+            重新加载
+          </el-button>
+        </div>
 
-      <el-form-item prop="password">
-        <span class="svg-container">
-          <svg-icon icon-class="password" />
-        </span>
-        <el-input
-          :key="passwordType"
-          ref="password"
-          v-model="loginForm.password"
-          :type="passwordType"
-          placeholder="Password"
-          name="password"
-          tabindex="2"
-          auto-complete="on"
-          @keyup.enter.native="handleLogin"
-        />
-        <span class="show-pwd" @click="showPwd">
-          <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
-        </span>
-      </el-form-item>
-
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
-
-      <div class="tips">
-        <span style="margin-right:20px;">username: admin</span>
-        <span> password: any</span>
+        <div v-show="confirmLoginFlag" class="confirm-login">
+          <img src="@/assets/successScan.png" alt="">
+          <p>扫描成功</p>
+          <p>请在手机上[确认登录]</p>
+        </div>
       </div>
+    </div>
 
-    </el-form>
   </div>
 </template>
 
 <script>
-import { validUsername } from '@/utils/validate'
+import QRCode from 'qrcodejs2'
+import { getQRCodeLoginData, getQrCodeLoginKey } from '@/api/user'
 
 export default {
   name: 'Login',
   data() {
-    const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
-        callback(new Error('Please enter the correct user name'))
-      } else {
-        callback()
-      }
-    }
-    const validatePassword = (rule, value, callback) => {
-      if (value.length < 6) {
-        callback(new Error('The password can not be less than 6 digits'))
-      } else {
-        callback()
-      }
-    }
     return {
-      loginForm: {
-        username: 'admin',
-        password: '111111'
-      },
-      loginRules: {
-        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
-      },
-      loading: false,
-      passwordType: 'password',
-      redirect: undefined
+      qrCodeKey: '',
+      expiresFlag: false,
+      qrCodeShowFlag: false,
+      confirmLoginFlag: false,
+      redirect: undefined,
+      loginType: 'companyLogin',
+      interval: null
     }
   },
   watch: {
@@ -94,144 +49,150 @@ export default {
       immediate: true
     }
   },
+  created() {
+    this.getQrCodeLoginKey()
+  },
+  destroyed() {
+    // 清理定时器
+    this.interval && clearInterval(this.interval)
+  },
   methods: {
-    showPwd() {
-      if (this.passwordType === 'password') {
-        this.passwordType = ''
-      } else {
-        this.passwordType = 'password'
-      }
-      this.$nextTick(() => {
-        this.$refs.password.focus()
+    getQrCodeLoginKey() {
+      this.confirmLoginFlag = false
+      this.expiresFlag = false
+      this.qrCodeShowFlag = false
+
+      const loginType = this.loginType
+      getQrCodeLoginKey({ loginType }).then(res => {
+        const { qrCodeKey } = res.data
+        this.qrCodeKey = qrCodeKey
+
+        const qrCodeContent = `http://shiku.co/im-download.html?action=${loginType}&qrCodeKey=${qrCodeKey}`
+        this.loadQrCode(qrCodeContent)
+        this.loopCheckLoginStatus()
       })
     },
-    handleLogin() {
-      this.$refs.loginForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
-            this.loading = false
-          }).catch(() => {
-            this.loading = false
-          })
-        } else {
-          console.log('error submit!!')
-          return false
-        }
+    // 加载二维码
+    loadQrCode(content) {
+      this.qrCodeShowFlag = true
+
+      this.$nextTick(() => {
+        new QRCode(this.$refs.qrCodeDiv, {
+          text: content,
+          width: 200,
+          height: 200,
+          colorDark: '#333333', // 二维码颜色
+          colorLight: '#ffffff', // 二维码背景色
+          correctLevel: QRCode.CorrectLevel.L// 容错率，L/M/H
+        })
       })
+    },
+    /**
+     * 循环检查登录状态
+     */
+    loopCheckLoginStatus() {
+      this.interval = setInterval(async() => {
+        const data = { qrCodeKey: this.qrCodeKey, loginType: this.loginType }
+        const result = await getQRCodeLoginData(data)
+
+        // 过期
+        if (!result.data) {
+          this.$message.info('二维码已过期')
+          this.expiresFlag = true
+          clearInterval(this.interval)
+          return
+        }
+
+        const { status } = result.data
+
+        switch (status) {
+          // 已扫码等待确认
+          case '1': {
+            this.confirmLoginFlag = true
+            break
+          }
+          // 已取消
+          case '2': {
+            this.$message.info('用户取消确认')
+            this.expiresFlag = true
+            clearInterval(this.interval)
+            break
+          }
+          // 已确定登录
+          case '3': {
+            this.$message.success('登陆成功')
+            this.handleLogin(result.data)
+            clearInterval(this.interval)
+            break
+          }
+          // 过期
+          default: {
+            break
+          }
+        }
+      }, 2000)
+    },
+
+    handleLogin(loginData) {
+      this.$store.dispatch('user/autoLogin', loginData)
+      this.$router.push({ path: this.redirect || '/' })
     }
   }
 }
 </script>
 
-<style lang="scss">
-/* 修复input 背景不协调 和光标变色 */
-/* Detail see https://github.com/PanJiaChen/vue-element-admin/pull/927 */
-
-$bg:#283443;
-$light_gray:#fff;
-$cursor: #fff;
-
-@supports (-webkit-mask: none) and (not (cater-color: $cursor)) {
-  .login-container .el-input input {
-    color: $cursor;
-  }
-}
-
-/* reset element-ui css */
-.login-container {
-  .el-input {
-    display: inline-block;
-    height: 47px;
-    width: 85%;
-
-    input {
-      background: transparent;
-      border: 0px;
-      -webkit-appearance: none;
-      border-radius: 0px;
-      padding: 12px 5px 12px 15px;
-      color: $light_gray;
-      height: 47px;
-      caret-color: $cursor;
-
-      &:-webkit-autofill {
-        box-shadow: 0 0 0px 1000px $bg inset !important;
-        -webkit-text-fill-color: $cursor !important;
-      }
-    }
-  }
-
-  .el-form-item {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
-    color: #454545;
-  }
-}
-</style>
-
 <style lang="scss" scoped>
-$bg:#2d3a4b;
-$dark_gray:#889aa4;
-$light_gray:#eee;
-
 .login-container {
   min-height: 100%;
   width: 100%;
-  background-color: $bg;
+  background-color: #2d3a4b;
   overflow: hidden;
 
-  .login-form {
-    position: relative;
+  .title-container {
+    .title {
+      font-size: 26px;
+      color: #fff;
+      margin: 0 auto 40px auto;
+      text-align: center;
+      font-weight: bold;
+    }
+
+  }
+
+  .login-qrcode-container {
     width: 520px;
     max-width: 100%;
     padding: 160px 35px 0;
     margin: 0 auto;
-    overflow: hidden;
+
   }
 
-  .tips {
-    font-size: 14px;
-    color: #fff;
-    margin-bottom: 10px;
-
-    span {
-      &:first-of-type {
-        margin-right: 16px;
-      }
-    }
-  }
-
-  .svg-container {
-    padding: 6px 5px 6px 15px;
-    color: $dark_gray;
-    vertical-align: middle;
-    width: 30px;
-    display: inline-block;
-  }
-
-  .title-container {
-    position: relative;
-
-    .title {
-      font-size: 26px;
-      color: $light_gray;
-      margin: 0px auto 40px auto;
-      text-align: center;
-      font-weight: bold;
-    }
-  }
-
-  .show-pwd {
+  .qrcode-container {
     position: absolute;
-    right: 10px;
-    top: 7px;
-    font-size: 16px;
-    color: $dark_gray;
-    cursor: pointer;
-    user-select: none;
+
+    .qrcode {
+      position: relative;
+      left: 65%;
+    }
+
+    .expire {
+      position: relative;
+      top: -120px;
+      left: 85%;
+    }
+
+    .confirm-login {
+      position: relative;
+      text-align: center;
+      width: 200px;
+      height: 200px;
+      background-color: #2d3a4b;
+      opacity: 0.999;
+      left: 60%;
+      color: #fff;
+    }
   }
+
 }
+
 </style>
