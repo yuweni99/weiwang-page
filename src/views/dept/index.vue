@@ -4,6 +4,7 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
+          v-if="defaultDeptFlag"
           type="primary"
           plain
           icon="el-icon-plus"
@@ -33,6 +34,13 @@
       :default-expand-all="isExpandAll"
     >
       <el-table-column prop="id" label="id" width="260" />
+      <el-table-column prop="type" label="是否官方" width="60">
+        <template slot-scope="scope">
+
+          <el-tag v-if="scope.row.type === '1'" type="success">是</el-tag>
+          <el-tag v-else type="info">否</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="name" label="部门名称" width="100" />
       <el-table-column prop="officialAccountName" label="绑定公众号" width="100" />
       <el-table-column prop="managerUserName" label="管理员" width="100" />
@@ -43,6 +51,13 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
+            v-if="defaultDeptFlag"
+            size="mini"
+            type="text"
+            icon="el-icon-user"
+          >人员列表
+          </el-button>
+          <el-button
             size="mini"
             type="text"
             icon="el-icon-edit"
@@ -50,6 +65,7 @@
           >修改
           </el-button>
           <el-button
+            v-if="defaultDeptFlag"
             size="mini"
             type="text"
             icon="el-icon-plus"
@@ -57,7 +73,7 @@
           >新增
           </el-button>
           <el-button
-            v-if="!scope.row.children"
+            v-if="!scope.row.children && scope.row.type !== '1'"
             size="mini"
             type="text"
             icon="el-icon-delete"
@@ -72,8 +88,8 @@
     <el-dialog :title="title" :visible.sync="open" width="630px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-row>
-          <el-col v-if="form.parentId !== 0" :span="24">
-            <el-form-item label="上级部门" prop="parentId">
+          <el-col v-if="form.parentId !== '0'" :span="24">
+            <el-form-item label="上级部门">
               <treeselect
                 v-model="form.parentId"
                 :options="deptOptions"
@@ -86,12 +102,17 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="管理员姓名" prop="managerUserName">
-              <el-input v-model="form.managerUserName" placeholder="管理员姓名" />
+              <el-input v-model="form.managerUserName" disabled placeholder="管理员姓名" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="管理员手机号" prop="managerUserMobile">
-              <el-input v-model="form.managerUserMobile" maxlength="11" placeholder="请输入管理员手机号" />
+              <el-input
+                v-model="form.managerUserMobile"
+                maxlength="11"
+                placeholder="请输入管理员手机号"
+                @change="findInfoByMobile"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -114,8 +135,8 @@
 <script>
 
 import { mapGetters } from 'vuex'
-
-import { addDept, delDept, findCompanyUserDeptTree, getDept, updateDept } from '@/api/dept'
+import { findInfoByMobile } from '@/api/user'
+import { addDept, delDept, findCompanyUserDeptTree, findInfo, updateDept } from '@/api/dept'
 import Treeselect from '@riophae/vue-treeselect'
 import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 
@@ -124,6 +145,7 @@ export default {
   components: { Treeselect },
   data() {
     return {
+      userInfo: null,
       // 遮罩层
       loading: true,
       // 显示搜索条件
@@ -134,6 +156,8 @@ export default {
       deptOptions: [],
       // 弹出层标题
       title: '',
+      defaultDeptFlag: false,
+      deptInfo: {},
       // 是否显示弹出层
       open: false,
       // 是否展开，默认全部展开
@@ -170,19 +194,28 @@ export default {
     }
   },
   created() {
+    this.findDeptInfo()
     this.getList()
   },
   computed: {
     ...mapGetters([
-      'id'
+      'deptId'
     ])
   },
   methods: {
+    async findDeptInfo() {
+      const result = await findInfo(this.deptId)
+      this.deptInfo = result.data
+
+      this.defaultDeptFlag = this.deptInfo.type === '1'
+    },
     /** 查询部门列表 */
     getList() {
       this.loading = true
-      findCompanyUserDeptTree({ id: this.id }).then(response => {
-        this.deptList = response.data
+      findCompanyUserDeptTree({ deptId: this.deptId }).then(response => {
+        const list = response.data
+        list.sort((a, b) => a.createTime - b.createTime < 0 ? 1 : -1)
+        this.deptList = list
         this.deptOptions = response.data
         this.loading = false
       })
@@ -223,6 +256,10 @@ export default {
       this.reset()
       if (row !== undefined) {
         this.form.parentId = row.id
+        this.form.level = row.level + 1
+      } else {
+        this.form.level = 1
+        this.form.parentId = '0'
       }
       this.open = true
       this.title = '添加部门'
@@ -238,29 +275,56 @@ export default {
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset()
-      getDept(row.id).then(response => {
-        this.form = response.data
-        this.open = true
-        this.title = '修改部门'
-        if (!this.deptOptions.length) {
-          const noResultsOptions = { id: this.form.parentId, name: this.form.parentName, children: [] }
-          this.deptOptions.push(noResultsOptions)
-        }
-      })
+      this.form = { ...row }
+      this.form.level = row.level + 1
+      delete this.form.children
+      this.open = true
+      this.title = '修改部门'
+      if (!this.deptOptions.length) {
+        const noResultsOptions = { id: this.form.parentId, name: this.form.parentName, children: [] }
+        this.deptOptions.push(noResultsOptions)
+      }
+    },
+    async findInfoByMobile() {
+      const pattern = /^1[3|4|5|6|7|8|9][0-9]\d{8}$/
+
+      this.$set(this.form, 'managerUserName', '')
+      if (!pattern.test(this.form.managerUserMobile)) {
+        return
+      }
+
+      const result = await findInfoByMobile({ mobile: this.form.managerUserMobile })
+      this.userInfo = result.data
+
+      if (this.userInfo == null) {
+        return
+      }
+
+      if (this.userInfo.authStatus !== '1') {
+        return
+      }
+      this.form.managerUserId = this.userInfo.userId
+      this.$set(this.form, 'managerUserName', this.userInfo.authName)
     },
     /** 提交按钮 */
     submitForm: function() {
       this.$refs['form'].validate(valid => {
         if (valid) {
-          if (this.form.id != undefined) {
-            updateDept(this.form).then(response => {
-              this.$modal.msgSuccess('修改成功')
+          const data = {
+            ...this.form,
+            companyName: this.deptInfo.companyName,
+            companyId: this.deptInfo.companyId
+          }
+
+          if (this.form.id) {
+            updateDept(data).then(response => {
+              this.$message.success('修改成功')
               this.open = false
               this.getList()
             })
           } else {
-            addDept(this.form).then(response => {
-              this.$modal.msgSuccess('新增成功')
+            addDept(data).then(response => {
+              this.$message.success('修改成功')
               this.open = false
               this.getList()
             })
@@ -270,11 +334,16 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      this.$modal.confirm('是否确认删除名称为"' + row.deptName + '"的数据项？').then(function() {
+      this.$confirm('是否确认删除名称为"' + row.name + '"的数据项？', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        center: true
+      }).then(function() {
         return delDept(row.id)
       }).then(() => {
         this.getList()
-        this.$modal.msgSuccess('删除成功')
+        this.$message.success('删除成功')
       }).catch(() => {
       })
     }

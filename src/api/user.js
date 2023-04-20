@@ -25,3 +25,11 @@ export function logout(query) {
     params: query
   })
 }
+
+export function findInfoByMobile(query) {
+  return request({
+    url: '/console/user/findInfoByMobile',
+    method: 'get',
+    params: query
+  })
+}

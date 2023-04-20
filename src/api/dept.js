@@ -1,11 +1,11 @@
 import request from '@/utils/request'
 
 // 查询部门列表
-export function listDept(query) {
+export function findInfo(id) {
   return request({
-    url: '/system/dept/list',
+    url: '/console/dept/findInfo',
     method: 'get',
-    params: query
+    params: { id }
   })
 }
 
@@ -35,27 +35,28 @@ export function getDept(deptId) {
 }
 
 // 新增部门
-export function addDept(data) {
+export function addDept(params) {
   return request({
-    url: '/system/dept',
+    url: '/console/dept/addDept',
     method: 'post',
-    data: data
+    params
   })
 }
 
 // 修改部门
-export function updateDept(data) {
+export function updateDept(params) {
   return request({
-    url: '/system/dept',
-    method: 'put',
-    data: data
+    url: '/console/dept/updateDept',
+    method: 'post',
+    params
   })
 }
 
 // 删除部门
-export function delDept(deptId) {
+export function delDept(id) {
   return request({
-    url: '/system/dept/' + deptId,
-    method: 'delete'
+    url: '/console/dept/del',
+    params: { id },
+    method: 'get'
   })
 }
