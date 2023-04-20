@@ -20,7 +20,7 @@ export function getQRCodeLoginData(query) {
 
 export function logout(query) {
   return request({
-    url: '/getQrCodeLoginKey',
+    url: '/console/logout',
     method: 'get',
     params: query
   })

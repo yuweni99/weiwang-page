@@ -53,6 +53,21 @@ export const constantRoutes = [
       meta: { title: '首页', icon: 'dashboard' }
     }]
   },
+  {
+    path: '/dept',
+    component: Layout,
+    redirect: '/dept/list',
+    name: 'dept',
+    meta: { title: '部门', icon: 'el-icon-s-help' },
+    children: [
+      {
+        path: 'list',
+        name: 'deptList',
+        component: () => import('@/views/dept/index'),
+        meta: { title: '部门列表', icon: 'table' }
+      }
+    ]
+  },
 
   {
     path: '/example',
