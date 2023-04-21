@@ -15,6 +15,17 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
+          v-if="defaultDeptFlag"
+          type="primary"
+          plain
+          icon="el-icon-plus"
+          size="mini"
+          @click="toApplyPage"
+        >部门申请
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
           type="info"
           plain
           icon="el-icon-sort"
@@ -89,7 +100,7 @@
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-row>
           <el-col v-if="form.parentId !== '0'" :span="24">
-            <el-form-item label="上级部门">
+            <el-form-item label="上级部门" prop="parentId">
               <treeselect
                 v-model="form.parentId"
                 :options="deptOptions"
@@ -174,7 +185,7 @@ export default {
       // 表单校验
       rules: {
         parentId: [
-          { required: true, message: '上级部门不能为空', trigger: 'blur' }
+          { validator: this.validateParentId, trigger: 'blur' }
         ],
         name: [
           { required: true, message: '部门名称不能为空', trigger: 'blur' }
@@ -203,6 +214,22 @@ export default {
     ])
   },
   methods: {
+    toApplyPage() {
+      this.$router.push({
+        path: '/dept/apply',
+        query: {
+          companyId: this.deptInfo.companyId,
+          companyName: this.deptInfo.companyName
+        }
+      })
+    },
+    validateParentId(rule, value, callback) {
+      if (!value && !this.form.id) {
+        callback(new Error('请选择部门'))
+        return
+      }
+      callback()
+    },
     async findDeptInfo() {
       const result = await findInfo(this.deptId)
       this.deptInfo = result.data

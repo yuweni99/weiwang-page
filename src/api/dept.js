@@ -18,11 +18,12 @@ export function findCompanyUserDeptTree(query) {
   })
 }
 
-// 查询部门列表（排除节点）
-export function listDeptExcludeChild(deptId) {
+// 分页查询部门
+export function pageQueryDept(query) {
   return request({
-    url: '/system/dept/list/exclude/' + deptId,
-    method: 'get'
+    url: '/console/dept/pageQuery',
+    method: 'get',
+    params: query
   })
 }
 

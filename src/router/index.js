@@ -65,6 +65,13 @@ export const constantRoutes = [
         name: 'deptList',
         component: () => import('@/views/dept/index'),
         meta: { title: '部门列表', icon: 'table' }
+      },
+      {
+        path: 'apply',
+        name: 'applyList',
+        hidden: true,
+        component: () => import('@/views/dept/deptApply.vue'),
+        meta: { title: '部门申请列表', icon: 'table' }
       }
     ]
   },

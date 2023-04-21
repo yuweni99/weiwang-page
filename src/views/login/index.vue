@@ -35,7 +35,7 @@ export default {
       qrCodeKey: '',
       expiresFlag: false,
       qrCodeShowFlag: false,
-      confirmLoginFlag: false,
+      confirmLoginFlag: true,
       redirect: undefined,
       loginType: 'companyLogin',
       interval: null
@@ -50,7 +50,7 @@ export default {
     }
   },
   created() {
-    this.getQrCodeLoginKey()
+    // this.getQrCodeLoginKey()
   },
   destroyed() {
     // 清理定时器
