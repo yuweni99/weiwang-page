@@ -109,12 +109,14 @@ export default {
           // 已扫码等待确认
           case '1': {
             this.confirmLoginFlag = true
+            this.qrCodeShowFlag = false
             break
           }
           // 已取消
           case '2': {
             this.$message.info('用户取消确认')
             this.expiresFlag = true
+            this.confirmLoginFlag = false
             clearInterval(this.interval)
             break
           }
