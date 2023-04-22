@@ -27,11 +27,12 @@ export function pageQueryDept(query) {
   })
 }
 
-// 查询部门详细
-export function getDept(deptId) {
+// 审批部门
+export function approvalDept(query) {
   return request({
-    url: '/system/dept/' + deptId,
-    method: 'get'
+    url: '/console/dept/approvalDept',
+    method: 'post',
+    params: query
   })
 }
 

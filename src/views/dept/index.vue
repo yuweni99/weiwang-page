@@ -47,25 +47,24 @@
       <el-table-column prop="id" label="id" width="260" />
       <el-table-column prop="type" label="是否官方" width="60">
         <template slot-scope="scope">
-
           <el-tag v-if="scope.row.type === '1'" type="success">是</el-tag>
           <el-tag v-else type="info">否</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="name" label="部门名称" width="100" />
-      <el-table-column prop="officialAccountName" label="绑定公众号" width="100" />
-      <el-table-column prop="managerUserName" label="管理员" width="100" />
-      <el-table-column prop="managerUserId" label="管理员账号" width="100" />
-      <el-table-column prop="managerUserMobile" label="管理员手机号" width="120" />
-      <el-table-column prop="num" label="部门人数" width="80" />
-      <el-table-column label="创建时间" align="center" prop="createTimeStr" width="140" />
+      <el-table-column prop="name" label="部门名称" />
+      <el-table-column prop="officialAccountName" label="绑定公众号" />
+      <el-table-column prop="managerUserName" label="管理员" />
+      <el-table-column prop="managerUserId" label="管理员账号" />
+      <el-table-column prop="managerUserMobile" label="管理员手机号" />
+      <el-table-column prop="num" label="部门人数" />
+      <el-table-column label="创建时间" align="center" prop="createTimeStr" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
-            v-if="defaultDeptFlag"
             size="mini"
             type="text"
             icon="el-icon-user"
+            @click="toDeptMemberPage(scope.row)"
           >人员列表
           </el-button>
           <el-button
@@ -122,7 +121,7 @@
                 v-model="form.managerUserMobile"
                 maxlength="11"
                 placeholder="请输入管理员手机号"
-                @change="findInfoByMobile"
+                @input.native="findInfoByMobile"
               />
             </el-form-item>
           </el-col>
@@ -214,6 +213,15 @@ export default {
     ])
   },
   methods: {
+    toDeptMemberPage(row) {
+      this.$router.push({
+        path: '/dept/deptMember',
+        query: {
+          deptId: row.id,
+          deptName: row.name
+        }
+      })
+    },
     toApplyPage() {
       this.$router.push({
         path: '/dept/apply',
@@ -224,6 +232,11 @@ export default {
       })
     },
     validateParentId(rule, value, callback) {
+      if (this.defaultDeptFlag) {
+        callback()
+        return
+      }
+
       if (!value && !this.form.id) {
         callback(new Error('请选择部门'))
         return
@@ -281,7 +294,7 @@ export default {
     /** 新增按钮操作 */
     handleAdd(row) {
       this.reset()
-      if (row !== undefined) {
+      if (row.id) {
         this.form.parentId = row.id
         this.form.level = row.level + 1
       } else {
