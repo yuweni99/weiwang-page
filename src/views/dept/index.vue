@@ -75,7 +75,6 @@
           >修改
           </el-button>
           <el-button
-            v-if="defaultDeptFlag"
             size="mini"
             type="text"
             icon="el-icon-plus"
@@ -253,7 +252,8 @@ export default {
     getList() {
       this.loading = true
       findCompanyUserDeptTree({ deptId: this.deptId }).then(response => {
-        const list = response.data
+        const list = response.data || []
+
         list.sort((a, b) => a.createTime - b.createTime < 0 ? 1 : -1)
         this.deptList = list
         this.deptOptions = response.data
