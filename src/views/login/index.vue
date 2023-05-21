@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-qrcode-container">
       <div class="title-container">
-        <h3 class="title">微网单位平台</h3>
+        <h3 class="title">微网平台</h3>
       </div>
       <div class="qrcode-container">
         <div v-if="qrCodeShowFlag" ref="qrCodeDiv" class="qrcode" />
@@ -67,7 +67,7 @@ export default {
         const { qrCodeKey } = res.data
         this.qrCodeKey = qrCodeKey
 
-        const qrCodeContent = `http://shiku.co/im-download.html?action=${loginType}&qrCodeKey=${qrCodeKey}`
+        const qrCodeContent = `https://www.micronet.link?action=${loginType}&qrCodeKey=${qrCodeKey}`
         this.loadQrCode(qrCodeContent)
         this.loopCheckLoginStatus()
       })

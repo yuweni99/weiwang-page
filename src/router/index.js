@@ -54,31 +54,29 @@ export const constantRoutes = [
     }]
   },
   {
-    path: '/dept',
+    path: '/application',
     component: Layout,
-    redirect: '/dept/list',
-    name: 'dept',
-    meta: { title: '部门', icon: 'el-icon-s-help' },
+    redirect: '/application/list',
+    name: 'application',
+    meta: { title: '应用', icon: 'el-icon-s-help' },
     children: [
       {
         path: 'list',
-        name: 'deptList',
-        component: () => import('@/views/dept/index'),
-        meta: { title: '部门列表', icon: 'table' }
+        name: 'list',
+        component: () => import('@/views/application/index'),
+        meta: { title: '应用列表', icon: 'table' }
       },
       {
-        path: 'apply',
-        name: 'applyList',
-        hidden: true,
-        component: () => import('@/views/dept/deptApply.vue'),
-        meta: { title: '部门申请列表', icon: 'table' }
+        path: 'deptApplication',
+        name: 'deptApplication',
+        component: () => import('@/views/application/deptApplication'),
+        meta: { title: '单位应用', icon: 'table' }
       },
       {
-        path: 'deptMember',
-        name: 'deptMember',
-        hidden: true,
-        component: () => import('@/views/dept/deptMember.vue'),
-        meta: { title: '部门人员列表', icon: 'table' }
+        path: 'classify',
+        name: 'classify',
+        component: () => import('@/views/application/classify'),
+        meta: { title: '应用分类', icon: 'table' }
       }
     ]
   },

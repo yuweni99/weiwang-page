@@ -1,6 +1,6 @@
 module.exports = {
 
-  title: '微网单位平台',
+  title: '微网平台',
 
   /**
    * @type {boolean} true | false

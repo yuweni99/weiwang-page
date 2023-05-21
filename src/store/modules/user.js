@@ -5,8 +5,6 @@ import { resetRouter } from '@/router'
 const getDefaultState = () => {
   return {
     token: getToken(),
-    deptId: getData('deptId'),
-    deptName: getData('deptName'),
     userId: getData('userId'),
     name: '',
     avatar: ''
@@ -42,9 +40,7 @@ const actions = {
     commit('SET_LOGIN_INFO', data)
 
     setToken(data.token)
-    setData('deptId', data.deptId)
     setData('userId', data.userId)
-    setData('deptName', data.deptName)
   },
   // user login
   login({ commit }, userInfo) {
@@ -88,8 +84,6 @@ const actions = {
       logout().then(() => {
         removeToken() // must remove  token  first
         removeData('userId')
-        removeData('deptName')
-        removeData('deptId')
         resetRouter()
         commit('RESET_STATE')
         resolve()
