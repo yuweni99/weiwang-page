@@ -20,6 +20,14 @@
     >
       <el-table-column type="index" label="序号" />
       <el-table-column prop="name" label="应用名称" />
+      <el-table-column prop="number" label="应用数量">
+        <template slot-scope="scope">
+          <span
+            :style="scope.row.number ? 'color: blue': ''"
+            @click="goToApplicationPage(scope.row)"
+          >{{ scope.row.number }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="sort" label="排序" />
       <el-table-column label="操作">
         <template v-slot="scope">
@@ -30,6 +38,7 @@
           >修改
           </el-button>
           <el-button
+            v-if="scope.row.number === 0"
             size="mini"
             type="text"
             @click="deleteClassify(scope.row)"
@@ -113,6 +122,18 @@ export default {
     this.getList()
   },
   methods: {
+    goToApplicationPage(data) {
+      if (!data.number) {
+        return
+      }
+
+      this.$router.push({
+        path: '/application/list',
+        query: {
+          classifyId: data.id
+        }
+      })
+    },
     openEditClassifyDialog(data = {}) {
       this.classifyForm = { ...data }
       this.dialogVisible = true

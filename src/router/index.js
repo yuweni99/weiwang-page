@@ -61,23 +61,24 @@ export const constantRoutes = [
     meta: { title: '应用', icon: 'el-icon-s-help' },
     children: [
       {
+        path: 'classify',
+        name: 'classify',
+        component: () => import('@/views/application/classify'),
+        meta: { title: '应用分类', icon: 'el-icon-sunny' }
+      },
+      {
         path: 'list',
         name: 'list',
         component: () => import('@/views/application/index'),
-        meta: { title: '应用列表', icon: 'table' }
+        meta: { title: '应用列表', icon: 'el-icon-folder-opened' }
       },
       {
         path: 'deptApplication',
         name: 'deptApplication',
         component: () => import('@/views/application/deptApplication'),
         meta: { title: '单位应用', icon: 'table' }
-      },
-      {
-        path: 'classify',
-        name: 'classify',
-        component: () => import('@/views/application/classify'),
-        meta: { title: '应用分类', icon: 'table' }
       }
+
     ]
   },
   // {

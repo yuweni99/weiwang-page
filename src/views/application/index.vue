@@ -6,9 +6,34 @@
           <el-input v-model="queryParams.name" size="mini" placeholder="请输入应用名称" clearable />
         </el-form-item>
 
-        <el-button size="mini" type="primary" @click="getList">搜索</el-button>
-        <el-button size="mini" type="info" @click="reset">重置</el-button>
-        <el-button size="mini" type="primary" @click="openEditApplicationDialog">添加</el-button>
+        <el-form-item label="分类">
+          <el-select v-model="queryParams.classifyId" size="mini" placeholder="请选择应用分类">
+            <el-option
+              v-for="item in classifies"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="试用状态">
+          <el-select v-model="queryParams.trialStatus" size="mini" placeholder="请选择试用状态">
+            <el-option
+              v-for="item in trialStatues"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button size="mini" type="primary" @click="getList">搜索</el-button>
+          <el-button size="mini" type="info" @click="reset">重置</el-button>
+          <el-button size="mini" type="primary" @click="openEditApplicationDialog">添加</el-button>
+
+        </el-form-item>
 
       </el-form-item>
     </el-form>
@@ -29,8 +54,19 @@
           />
         </template>
       </el-table-column>
+      <el-table-column prop="classifyName" label="分类" />
       <el-table-column prop="name" label="应用名称" />
       <el-table-column prop="code" label="应用编码" />
+      <el-table-column prop="backgroundAddress" label="管理后台">
+        <template v-slot="scope">
+          <span
+            v-if="scope.row.backgroundAddress"
+            :style="scope.row.backgroundAddress ? 'color: blue': ''"
+            @click="goToManagerBackstage(scope.row)"
+          >点击跳转</span>
+        </template>
+      </el-table-column>
+
       <el-table-column prop="trialStatus" label="试用状态">
         <template v-slot="scope">
           <el-tag :type="scope.row.trialStatus === '0' ? 'success':'info'">{{
@@ -40,7 +76,16 @@
         </template>
       </el-table-column>
       <el-table-column prop="trialDays" label="试用天数" />
-      <el-table-column prop="classifyName" label="分类" />
+
+      <el-table-column prop="code" label="使用单位">
+        <template v-slot="scope">
+          <span
+            :style="scope.row.number ? 'color: blue': ''"
+            @click="goToDeptApplicationPage(scope.row)"
+          >{{ scope.row.number }}</span>
+        </template>
+      </el-table-column>
+
       <el-table-column prop="createDateStr" label="创建日期" />
 
       <el-table-column label="操作">
@@ -78,6 +123,14 @@
           />
         </el-form-item>
 
+        <el-form-item label="管理后台" prop="backgroundAddress">
+          <el-input
+            v-model="applicationForm.backgroundAddress"
+            clearable
+            placeholder="请输入管理后台地址(https:://www.baidu.com)"
+          />
+        </el-form-item>
+
         <el-form-item label="图标" prop="iconUrl">
           <el-upload
             class="avatar-uploader"
@@ -106,6 +159,10 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="排序" prop="sort">
+          <el-input v-model="applicationForm.sort" type="number" placeholder="请输入排序" />
+        </el-form-item>
+
         <el-form-item label="分类" prop="classifyId">
           <el-select v-model="applicationForm.classifyId" placeholder="请选择分类">
             <el-option
@@ -131,6 +188,21 @@
 
         <el-form-item label="试用天数" prop="trialDays">
           <el-input v-model="applicationForm.trialDays" type="number" placeholder="请输入试用天数" />
+        </el-form-item>
+
+        <el-form-item label="计费周期" prop="feeType">
+          <el-select v-model="applicationForm.feeType" placeholder="请选择计费周期">
+            <el-option
+              v-for="item in feeTypes"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="服务费" prop="money">
+          <el-input v-model.number="applicationForm.money" type="number" />
         </el-form-item>
 
         <el-form-item label="简介" prop="briefIntroduction">
@@ -162,6 +234,15 @@ export default {
       codes: [
         { label: '校友卡', value: 'alumniCard' }
       ],
+      feeTypes: [
+        { label: '年', value: '1' },
+        { label: '季度', value: '2' },
+        { label: '月', value: '3' }
+      ],
+      trialStatues: [
+        { label: '未开启', value: '0' },
+        { label: '开启', value: '1' }
+      ],
       classifies: [],
       uploadUrl: `${process.env.VUE_APP_BASE_API}/upload`,
       dialogVisible: false,
@@ -176,11 +257,18 @@ export default {
         trialDays: null,
         briefIntroduction: null,
         bigBriefIntroduction: null,
-        iconUrl: null
+        iconUrl: null,
+        backgroundAddress: null,
+        feeType: null,
+        feeTypeName: null,
+        money: null,
+        sort: null
       },
       applications: [],
       queryParams: {
-        name: null
+        name: null,
+        classifyId: this.$route.query.classifyId,
+        trialStatus: null
       },
       applicationFormRules: {
         name: [
@@ -198,8 +286,14 @@ export default {
         trialStatus: [
           { required: true, message: '请选择使用状态', trigger: 'blur' }
         ],
+        sort: [
+          { required: true, message: '请输入排序', trigger: 'blur' }
+        ],
         trialDays: [
           { validator: this.validateTrialDays, trigger: 'blur' }
+        ],
+        backgroundAddress: [
+          { validator: this.validateBackgroundAddress, trigger: 'blur' }
         ]
       }
     }
@@ -212,6 +306,24 @@ export default {
     this.getListClassify()
   },
   methods: {
+    goToDeptApplicationPage(data) {
+      if (!data.number) {
+        return
+      }
+
+      this.$router.push({
+        path: '/application/deptApplication',
+        query: {
+          applicationId: data.id
+        }
+      })
+    },
+    goToManagerBackstage(data) {
+      if (!data.backgroundAddress) {
+        return
+      }
+      window.open(data.backgroundAddress)
+    },
     async getListClassify() {
       const result = await listClassify({})
       this.classifies = result.data
@@ -221,6 +333,19 @@ export default {
         callback(new Error('请输入试用天数'))
         return false
       }
+      callback()
+    },
+
+    validateBackgroundAddress(rule, value, callback) {
+      if (value) {
+        const pattern = /^(((ht|f)tps?):\/\/)?[\w-]+(\.[\w-]+)+([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?$/
+
+        if (!pattern.test(value)) {
+          callback(new Error('地址不合法'))
+          return false
+        }
+      }
+
       callback()
     },
     openEditApplicationDialog(data = {}) {
@@ -255,6 +380,7 @@ export default {
         }
 
         this.applicationForm.classifyName = this.classifies.find(item => item.id === this.applicationForm.classifyId).name
+        this.applicationForm.feeTypeName = this.feeTypes.find(item => item.value === this.applicationForm.feeType).label
 
         !this.applicationForm.id ? await addApplication(this.applicationForm) : await updateApplication(this.applicationForm)
         this.$message.success('操作成功')
@@ -269,7 +395,8 @@ export default {
 
     reset() {
       this.queryParams = {
-        name: null
+        name: null,
+        classifyId: null
       }
       this.getList()
     },

@@ -6,8 +6,43 @@
           <el-input v-model="queryParams.name" size="mini" placeholder="请输入应用名称" clearable />
         </el-form-item>
 
-        <el-button size="mini" type="primary" @click="getList">搜索</el-button>
-        <el-button size="mini" type="info" @click="reset">重置</el-button>
+        <el-form-item label="应用">
+          <el-select v-model="queryParams.applicationId" size="mini" placeholder="请选择应用分类">
+            <el-option
+              v-for="item in applications"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="启用状态">
+          <el-select v-model="queryParams.status" size="mini" placeholder="请选择启用状态">
+            <el-option
+              v-for="item in statues"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="开启状态">
+          <el-select v-model="queryParams.useStatus" size="mini" placeholder="请选择开启状态">
+            <el-option
+              v-for="item in useStatues"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button size="mini" type="primary" @click="getList">搜索</el-button>
+          <el-button size="mini" type="primary" @click="getExpiringSoonList">即将过期</el-button>
+          <el-button size="mini" type="info" @click="reset">重置</el-button>
+        </el-form-item>
       </el-form-item>
     </el-form>
 
@@ -17,11 +52,12 @@
       row-key="id"
     >
       <el-table-column type="index" label="序号" />
-      <el-table-column prop="deptName" label="部门名称" />
+      <el-table-column prop="applicationName" label="应用程序名称" />
       <el-table-column prop="companyName" label="公司名称" />
-      <el-table-column prop="applicationCode" label="应用编码" />
+      <el-table-column prop="deptName" label="部门名称" />
       <el-table-column prop="startDateStr" label="开始日期" />
       <el-table-column prop="endDateStr" label="结束日期" />
+      <el-table-column prop="effectiveDays" label="有效期/天" />
       <el-table-column prop="status" label="状态">
         <template v-slot="scope">
           <el-tag :type="scope.row.status === '0' ? 'success':'info'">{{
@@ -30,8 +66,14 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="applicationName" label="应用程序名称" />
-      <el-table-column prop="createUserId" label="申请用户id" />
+      <el-table-column prop="useStatus" label="使用状态">
+        <template v-slot="scope">
+          <el-tag :type="scope.row.useStatus === '0' ? 'success':'info'">{{
+            scope.row.status === '0' ? '禁用' : '使用'
+          }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="createUserName" label="申请用户名" />
       <el-table-column prop="createMobile" label="申请用户手机号" />
       <el-table-column label="操作">
@@ -42,12 +84,12 @@
             @click="openEditDeptApplicationDialog(scope.row)"
           >修改
           </el-button>
-          <el-button
-            size="mini"
-            type="text"
-            @click="deleteDeptApplication(scope.row)"
-          >删除
-          </el-button>
+          <!--          <el-button-->
+          <!--            size="mini"-->
+          <!--            type="text"-->
+          <!--            @click="deleteDeptApplication(scope.row)"-->
+          <!--          >删除-->
+          <!--          </el-button>-->
 
         </template>
       </el-table-column>
@@ -86,7 +128,7 @@
           />
         </el-form-item>
 
-        <el-form-item prop="startDateStr">
+        <el-form-item label="开始时间" prop="startDateStr">
           <el-date-picker
             v-model="deptApplicationForm.startDateStr"
             type="datetime"
@@ -96,7 +138,7 @@
           />
         </el-form-item>
 
-        <el-form-item prop="endDateStr">
+        <el-form-item label="结束时间" prop="endDateStr">
           <el-date-picker
             v-model="deptApplicationForm.endDateStr"
             format="yyyy-MM-dd HH:mm:ss"
@@ -104,6 +146,10 @@
             type="datetime"
             placeholder="选择结束时间"
           />
+        </el-form-item>
+
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="deptApplicationForm.remark" type="textarea" placeholder="备注" />
         </el-form-item>
 
       </el-form>
@@ -118,26 +164,41 @@
 
 <script>
 import { deleteDeptApplication, pageList, updateDeptApplication } from '@/api/application/deptApplication'
+import { list as getApplications } from '@/api/application/application'
 
 export default {
   name: 'DeptApplication',
   data() {
     return {
+      statues: [
+        { label: '禁用', value: '0' },
+        { label: '启用', value: '1' }
+      ],
+      useStatues: [
+        { label: '关闭', value: '0' },
+        { label: '开启', value: '1' }
+      ],
       codes: [
         { label: '校友卡', value: 'alumniCard' }
       ],
       dialogVisible: false,
       loading: false,
+      applications: [],
       deptApplicationForm: {
         id: null,
         name: null,
         status: null,
         startDateStr: null,
-        endDateStr: null
+        endDateStr: null,
+        remark: null
       },
       deptApplications: [],
       queryParams: {
         name: null,
+        applicationId: this.$route.query.applicationId,
+        status: null,
+        useStatus: null,
+        expiringSoonStatus: null,
         page: 1,
         limit: 10
       },
@@ -157,6 +218,7 @@ export default {
   },
   mounted() {
     this.getList()
+    this.getApplications()
   },
   methods: {
     openEditDeptApplicationDialog(data = {}) {
@@ -187,6 +249,10 @@ export default {
         await this.getList()
       })
     },
+    getExpiringSoonList() {
+      this.queryParams.expiringSoonStatus = '1'
+      this.getList()
+    },
     async getList() {
       try {
         this.loading = true
@@ -196,6 +262,18 @@ export default {
 
         this.deptApplications = data
         this.total = count
+      } finally {
+        this.loading = false
+      }
+    },
+    async getApplications() {
+      try {
+        this.loading = true
+
+        const result = await getApplications(this.queryParams)
+        const { data } = result
+
+        this.applications = data
       } finally {
         this.loading = false
       }

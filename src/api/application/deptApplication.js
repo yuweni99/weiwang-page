@@ -18,7 +18,7 @@ export function updateDeptApplication(query) {
 
 export function deleteDeptApplication(id) {
   return request({
-    url: '/console/application/delete',
+    url: '/console/deptApplication/delete',
     method: 'get',
     params: { id }
   })

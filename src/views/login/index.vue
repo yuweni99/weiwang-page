@@ -37,7 +37,7 @@ export default {
       qrCodeShowFlag: false,
       confirmLoginFlag: false,
       redirect: undefined,
-      loginType: 'companyLogin',
+      loginType: 'weiWangLogin',
       interval: null
     }
   },
