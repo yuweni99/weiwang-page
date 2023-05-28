@@ -380,7 +380,10 @@ export default {
         }
 
         this.applicationForm.classifyName = this.classifies.find(item => item.id === this.applicationForm.classifyId).name
-        this.applicationForm.feeTypeName = this.feeTypes.find(item => item.value === this.applicationForm.feeType).label
+
+        if (this.applicationForm.feeType) {
+          this.applicationForm.feeTypeName = this.feeTypes.find(item => item.value === this.applicationForm.feeType).label
+        }
 
         !this.applicationForm.id ? await addApplication(this.applicationForm) : await updateApplication(this.applicationForm)
         this.$message.success('操作成功')

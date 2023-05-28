@@ -69,7 +69,7 @@
       <el-table-column prop="useStatus" label="使用状态">
         <template v-slot="scope">
           <el-tag :type="scope.row.useStatus === '0' ? 'success':'info'">{{
-            scope.row.status === '0' ? '禁用' : '使用'
+            scope.row.useStatus === '0' ? '禁用' : '使用'
           }}
           </el-tag>
         </template>
