@@ -174,6 +174,18 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="关注公众号" prop="followOfficialAccountStatus">
+          <el-switch
+            v-model="applicationForm.followOfficialAccountStatus"
+            active-text="开启"
+            inactive-text="关闭"
+            active-value="1"
+            inactive-value="0"
+            active-color="#13ce66"
+            inactive-color="#ff4949"
+          />
+        </el-form-item>
+
         <el-form-item label="试用状态" prop="trialStatus">
           <el-switch
             v-model="applicationForm.trialStatus"
@@ -262,7 +274,8 @@ export default {
         feeType: null,
         feeTypeName: null,
         money: null,
-        sort: null
+        sort: null,
+        followOfficialAccountStatus: null
       },
       applications: [],
       queryParams: {
@@ -285,6 +298,9 @@ export default {
         ],
         trialStatus: [
           { required: true, message: '请选择使用状态', trigger: 'blur' }
+        ],
+        followOfficialAccountStatus: [
+          { required: true, message: '请选择关注状态', trigger: 'blur' }
         ],
         sort: [
           { required: true, message: '请输入排序', trigger: 'blur' }
