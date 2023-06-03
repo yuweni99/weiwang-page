@@ -81,6 +81,22 @@ export const constantRoutes = [
 
     ]
   },
+  {
+    path: '/auth',
+    component: Layout,
+    redirect: '/auth/idPhotoAuth',
+    name: 'application',
+    meta: { title: '应用', icon: 'el-icon-s-help' },
+    children: [
+      {
+        path: 'idPhotoAuth',
+        name: 'idPhotoAuth',
+        component: () => import('@/views/auth/idPhotoAuth'),
+        meta: { title: '证件照审核', icon: 'el-icon-sunny' }
+      }
+
+    ]
+  },
   // {
   //   path: 'external-link',
   //   component: Layout,
