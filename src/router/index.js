@@ -97,6 +97,35 @@ export const constantRoutes = [
 
     ]
   },
+  {
+    path: '/user',
+    component: Layout,
+    redirect: '/user/index',
+    name: 'user',
+    meta: { title: '用户服务', icon: 'el-icon-s-help' },
+    children: [
+      {
+        path: 'index',
+        name: 'index',
+        component: () => import('@/views/user/index'),
+        meta: { title: '用户列表', icon: 'el-icon-sunny' }
+      },
+      {
+        path: 'userSetting',
+        name: 'userSetting',
+        hidden: true,
+        component: () => import('@/views/user/userSetting.vue'),
+        meta: { title: '用户设置', icon: 'el-icon-sunny' }
+      }, {
+        path: 'userInfo',
+        name: 'userInfo',
+        hidden: true,
+        component: () => import('@/views/user/userInfo.vue'),
+        meta: { title: '用户详情', icon: 'el-icon-sunny' }
+      }
+
+    ]
+  },
   // {
   //   path: 'external-link',
   //   component: Layout,

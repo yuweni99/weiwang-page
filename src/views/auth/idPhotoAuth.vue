@@ -98,11 +98,25 @@
 
       <el-table-column prop="sex" label="审核状态">
         <template v-slot="scope">
-          <el-tag :type="statusTypes[scope.row.status]">
+          <el-tag v-if="scope.row.status !== '1'" :type="statusTypes[scope.row.status]">
             {{ statues[scope.row.status] ? statues[scope.row.status].label : null }}
           </el-tag>
+          <el-popover
+            v-else
+            placement="top-start"
+            title="驳回原因"
+            width="200"
+            trigger="hover"
+            :content="scope.row.remark"
+          >
+            <el-tag slot="reference" type="info">
+              驳回
+            </el-tag>
+          </el-popover>
         </template>
       </el-table-column>
+
+      <el-table-column prop="auditUserName" label="审核人" />
 
       <el-table-column prop="createDateStr" label="创建时间" />
       <el-table-column label="操作">

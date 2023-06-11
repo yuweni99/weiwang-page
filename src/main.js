@@ -12,7 +12,7 @@ import router from './router'
 
 import '@/icons' // icon
 import '@/permission' // permission control
-
+import { parseTime } from '@/utils/index.js'
 /**
  * If you don't want to use mock-server
  * you want to use MockJs for mock api
@@ -33,6 +33,8 @@ Vue.component('Pagination', Pagination)
 Vue.use(ElementUI)
 
 Vue.config.productionTip = false
+
+Vue.prototype.parseTime = parseTime
 
 new Vue({
   el: '#app',
