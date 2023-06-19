@@ -58,10 +58,10 @@
       <el-table-column prop="startDateStr" label="开始日期" />
       <el-table-column prop="endDateStr" label="结束日期" />
       <el-table-column prop="effectiveDays" label="有效期/天" />
-      <el-table-column prop="status" label="状态">
+      <el-table-column prop="status" label="启用状态">
         <template v-slot="scope">
           <el-tag :type="scope.row.status === '0' ? 'success':'info'">{{
-            scope.row.status === '0' ? '禁用' : '启用'
+            scope.row.status === '0' ? '未启用' : '启用'
           }}
           </el-tag>
         </template>
@@ -116,7 +116,7 @@
         :model="deptApplicationForm"
         label-width="80px"
       >
-        <el-form-item label="使用状态" prop="name">
+        <el-form-item label="启用状态" prop="name">
           <el-switch
             v-model="deptApplicationForm.status"
             active-text="开启"

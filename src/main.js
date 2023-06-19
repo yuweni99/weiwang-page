@@ -35,7 +35,6 @@ Vue.use(ElementUI)
 Vue.config.productionTip = false
 
 Vue.prototype.parseTime = parseTime
-
 new Vue({
   el: '#app',
   router,

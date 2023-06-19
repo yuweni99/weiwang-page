@@ -15,6 +15,10 @@
       <el-form-item label="用户昵称">
         <el-input v-model="queryParams.keyWord" size="mini" placeholder="请输入用户昵称" clearable />
       </el-form-item>
+
+      <el-form-item label="用户姓名">
+        <el-input v-model="queryParams.authName" size="mini" placeholder="请输入用户姓名" clearable />
+      </el-form-item>
       <el-form-item label="手机号">
         <el-input v-model="queryParams.phone" size="mini" placeholder="请输入手机号" clearable />
       </el-form-item>
@@ -127,20 +131,21 @@
         </template>
       </el-table-column>
       <el-table-column prop="userId" label="微网id" />
-      <el-table-column prop="username" label="用户名" />
+      <el-table-column prop="authName" label="用户名" />
       <el-table-column prop="nickname" label="昵称" />
       <el-table-column prop="phone" label="手机号" />
       <el-table-column prop="authIdCard" label="身份证" width="200" />
       <el-table-column prop="account" label="微网账号" />
       <el-table-column label="性别">
         <template v-slot="scope">
-          <el-tag v-if="scope.row.sex" :type="scope.row.sex === 0 ? 'success':'info'">{{
+          <el-tag :type="scope.row.sex === 0 ? 'success':'info'">{{
             scope.row.sex === 0 ? '女' : '男'
           }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="age" label="年龄" />
+      <el-table-column prop="birthdayStr" label="生日" />
       <el-table-column prop="age" label="民族">
         <template v-slot="scope">
           <el-tag v-if="scope.row.userSeniorAuth" type="success"> {{ scope.row.userSeniorAuth.nation }}</el-tag>
@@ -159,7 +164,7 @@
       <el-table-column label="在线状态">
         <template v-slot="scope">
           <el-tag :type="scope.row.onlinestate === '0' ? 'success':'info'">{{
-            scope.row.onlinestate === 1 ? '在线' : '离线'
+            scope.row.onlinestate === 1 && scope.row.loginLog ? '在线' : '离线'
           }}
           </el-tag>
         </template>
@@ -237,12 +242,12 @@
           </el-button>
           <el-button
             size="mini"
-            @click="goToSetting(scope.row)"
+            @click="openUserSettingPage(scope.row)"
           >用户设置
           </el-button>
           <el-button
             size="mini"
-            @click="goToUserInfo(scope.row)"
+            @click="openUserInfoPage(scope.row)"
           >用户详情
           </el-button>
         </template>
@@ -273,9 +278,9 @@
           />
         </el-form-item>
 
-        <el-form-item label="手机号" prop="telephone">
+        <el-form-item label="手机号" prop="phone">
           <el-input
-            v-model="user.telephone"
+            v-model="user.phone"
             clearable
             type="number"
             placeholder="请输入手机号"
@@ -309,9 +314,9 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="出生日期" prop="birthDate">
+        <el-form-item label="出生日期" prop="birthdayStr">
           <el-date-picker
-            v-model="user.birthDate"
+            v-model="user.birthdayStr"
             value-format="yyyy-MM-dd HH:mm:ss"
             type="date"
             placeholder="出生日期"
@@ -424,6 +429,33 @@
         <el-button @click="handleSendMessageClose">取 消</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog
+      v-if="userSettingDialogVisible"
+      title="用户设置"
+      :visible.sync="userSettingDialogVisible"
+      append-to-body
+      width="80%"
+    >
+      <UserSetting :user-id="userId" />
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="userSettingDialogVisible = false">关闭</el-button>
+      </span>
+    </el-dialog>
+
+    <el-dialog
+      v-if="userInfoDialogVisible"
+      title="用户信息"
+      :visible.sync="userInfoDialogVisible"
+      append-to-body
+      width="80%"
+    >
+      <UserInfo :user-id="userId" />
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="userInfoDialogVisible = false">关闭</el-button>
+      </span>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -434,6 +466,8 @@ import { parseTime } from '@/utils/index.js'
 
 import UserBill from '@/views/user/components/UserBill.vue'
 import UserFriends from '@/views/user/components/UserFriends.vue'
+import UserSetting from '@/views/user/components/UserSetting.vue'
+import UserInfo from '@/views/user/components/UserInfo.vue'
 
 import {
   changeStatus,
@@ -451,10 +485,14 @@ export default {
   name: 'User',
   components: {
     UserBill,
-    UserFriends
+    UserFriends,
+    UserSetting,
+    UserInfo
   },
   data() {
     return {
+      userSettingDialogVisible: false,
+      userInfoDialogVisible: false,
       sendMessageDialogVisible: false,
       dialogVisible: false,
       billDialogVisible: false,
@@ -544,7 +582,7 @@ export default {
         nickname: [
           { required: true, message: '请输入用户昵称', trigger: 'blur' }
         ],
-        telephone: [
+        phone: [
           { required: true, message: '请输入手机号', trigger: 'blur' }
         ],
         password: [
@@ -553,7 +591,7 @@ export default {
         birthDateType: [
           { required: true, message: '请选择生日类别', trigger: 'blur' }
         ],
-        birthDate: [
+        birthdayStr: [
           { required: true, message: '请选择生日', trigger: 'blur' }
         ],
         userType: [
@@ -566,21 +604,17 @@ export default {
     this.getList()
   },
   methods: {
-    goToSetting(data) {
-      this.$router.push({
-        path: '/user/userSetting',
-        query: {
-          userId: data.userId
-        }
-      })
+    handleBirthDateChange(value) {
+      this.$set(this.user, 'birthDate', value)
+      this.$forceUpdate()
     },
-    goToUserInfo(data) {
-      this.$router.push({
-        path: '/user/userInfo',
-        query: {
-          userId: data.userId
-        }
-      })
+    openUserSettingPage(data) {
+      this.userId = data.userId
+      this.userSettingDialogVisible = true
+    },
+    openUserInfoPage(data) {
+      this.userId = data.userId
+      this.userInfoDialogVisible = true
     },
     handleSendMessage() {
       this.$refs.sendMessageForm.validate(async(valid) => {
@@ -636,14 +670,6 @@ export default {
     },
     openEditUserPage(user = {}) {
       this.user = { ...user }
-
-      if (this.user.birthday) {
-        this.user.birthDate = parseTime(this.user.birthday)
-      }
-
-      if (this.user.telephone) {
-        this.user.phone = this.user.telephone
-      }
 
       if (!this.user.userId) {
         this.user.userId = 0
@@ -739,7 +765,8 @@ export default {
           return false
         }
         this.user.setType = 1
-        this.user.birthday = Date.parse(this.user.birthDate) / 1000
+        this.user.telephone = this.user.phone
+        this.user.birthday = Date.parse(this.user.birthdayStr) / 1000
         await updateUser(this.user)
         this.$message.success('操作成功')
         this.handleUserClose()

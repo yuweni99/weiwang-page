@@ -25,7 +25,7 @@ module.exports = {
    * Detail: https://cli.vuejs.org/config/#publicpath
    */
   publicPath: '/weiwang-page/',
-  outputDir: 'dist',
+  outputDir: 'weiwang-page',
   assetsDir: 'static',
   lintOnSave: process.env.NODE_ENV === 'development',
   productionSourceMap: false,
@@ -39,6 +39,7 @@ module.exports = {
     proxy: {
       // detail: https://cli.vuejs.org/config/#devserver-proxy
       [process.env.VUE_APP_BASE_API]: {
+        // target: `http://localhost:8094`,
         target: `http://localhost:8094`,
         changeOrigin: true,
         pathRewrite: {

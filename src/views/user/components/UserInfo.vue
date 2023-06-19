@@ -53,6 +53,9 @@ const infos = [
 ]
 export default {
   name: 'UserInfo',
+  props: {
+    userId: Number
+  },
   data() {
     return {
       infos: {},
@@ -64,7 +67,7 @@ export default {
   },
   methods: {
     async getInfo() {
-      const result = await getInfo(this.$route.query.userId)
+      const result = await getInfo(this.userId)
 
       this.infos = infos.map((item, index) => ({
         ...item,

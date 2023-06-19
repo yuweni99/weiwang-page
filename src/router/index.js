@@ -109,21 +109,7 @@ export const constantRoutes = [
         name: 'index',
         component: () => import('@/views/user/index'),
         meta: { title: '用户列表', icon: 'el-icon-sunny' }
-      },
-      {
-        path: 'userSetting',
-        name: 'userSetting',
-        hidden: true,
-        component: () => import('@/views/user/userSetting.vue'),
-        meta: { title: '用户设置', icon: 'el-icon-sunny' }
-      }, {
-        path: 'userInfo',
-        name: 'userInfo',
-        hidden: true,
-        component: () => import('@/views/user/userInfo.vue'),
-        meta: { title: '用户详情', icon: 'el-icon-sunny' }
       }
-
     ]
   },
   // {

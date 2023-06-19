@@ -269,7 +269,6 @@
 
       <el-form-item label="操作">
         <el-button type="primary" @click="setUserSetting">保存</el-button>
-        <el-button type="primary" @click="$router.back()">返回</el-button>
       </el-form-item>
     </el-form>
 
@@ -281,7 +280,9 @@ import { getUserSetting, setUserSetting } from '@/api/user'
 
 export default {
   name: 'UserSetting',
-
+  props: {
+    userId: Number
+  },
   data() {
     return {
       friendFrom: [],
@@ -337,7 +338,7 @@ export default {
   },
   methods: {
     async getUserSetting() {
-      const result = await getUserSetting(this.$route.query.userId)
+      const result = await getUserSetting(this.userId)
       this.setting = result.data
 
       if (this.setting.friendFromList) {
@@ -350,7 +351,7 @@ export default {
       await this.$confirm(`确认保存设置吗`, '警告')
 
       this.setting.friendFromList = this.friendFrom.join(',')
-      this.setting.userId = this.$route.query.userId
+      this.setting.userId = this.userId
 
       await setUserSetting(this.setting)
       this.$message.success('保存成功')
