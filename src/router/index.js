@@ -112,6 +112,21 @@ export const constantRoutes = [
       }
     ]
   },
+  {
+    path: '/schoolInfo',
+    component: Layout,
+    redirect: '/schoolInfo/index',
+    name: 'user',
+    meta: { title: '学校列表', icon: 'el-icon-s-help' },
+    children: [
+      {
+        path: 'index',
+        name: 'index',
+        component: () => import('@/views/schoolInfo/index'),
+        meta: { title: '学校列表', icon: 'el-icon-sunny' }
+      }
+    ]
+  },
   // {
   //   path: 'external-link',
   //   component: Layout,

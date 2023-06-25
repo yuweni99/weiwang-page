@@ -534,7 +534,7 @@ export default {
       offlineDates: [],
       loading: false,
       queryParams: {
-        page: 0,
+        page: 1,
         limit: 10,
         onlinestate: null,
         keyWord: null,
