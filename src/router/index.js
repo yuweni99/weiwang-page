@@ -126,6 +126,19 @@ export const constantRoutes = [
         meta: { title: '学校列表', icon: 'el-icon-sunny' }
       }
     ]
+  }, {
+    path: '/alumniCard',
+    component: Layout,
+    name: 'alumniCard',
+    meta: { title: '消息通知', icon: 'el-icon-s-help' },
+    children: [
+      {
+        path: 'messageNotification',
+        name: 'index',
+        component: () => import('@/views/messageNotification/index'),
+        meta: { title: '消息通知', icon: 'el-icon-sunny' }
+      }
+    ]
   },
   // {
   //   path: 'external-link',

@@ -12,7 +12,7 @@ export function updateDeptApplication(query) {
   return request({
     url: '/console/deptApplication/update',
     method: 'post',
-    params: query
+    data: query
   })
 }
 
@@ -24,3 +24,10 @@ export function deleteDeptApplication(id) {
   })
 }
 
+export function bindSchoolInfo(data) {
+  return request({
+    url: '/console/deptApplication/bindSchoolInfo',
+    method: 'post',
+    data
+  })
+}

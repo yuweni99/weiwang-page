@@ -46,3 +46,20 @@ export function deleteSchoolInfo(id) {
     params: { id }
   })
 }
+
+export function bindCompanyDeptInfo(data) {
+  return request({
+    url: '/console/schoolInfo/bindCompanyDeptInfo',
+    method: 'post',
+    data
+  })
+}
+
+export function updateBindCompanyDeptInfo(data) {
+  return request({
+    url: '/console/schoolInfo/updateBindCompanyDeptInfo',
+    method: 'post',
+    data
+  })
+}
+

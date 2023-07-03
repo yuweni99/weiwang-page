@@ -32,6 +32,8 @@
       </el-table-column>
 
       <el-table-column label="名字" prop="name" />
+      <el-table-column label="绑定单位" prop="companyName" />
+      <el-table-column label="绑定部门" prop="deptName" />
       <el-table-column label="简称" prop="shortName" />
       <el-table-column label="学校编码" prop="code" />
       <el-table-column label="排名" prop="ranking" />
@@ -44,6 +46,18 @@
             size="mini"
             @click="getInfo(scope.row.id, false)"
           >修改
+          </el-button>
+          <el-button
+            v-if="!scope.row.companyId"
+            size="mini"
+            @click="openBindCompanyDeptPage(scope.row, false)"
+          >绑定单位
+          </el-button>
+          <el-button
+            v-if="scope.row.companyId"
+            size="mini"
+            @click="openBindCompanyDeptPage(scope.row, true)"
+          >修改绑定单位
           </el-button>
           <el-button
             size="mini"
@@ -276,13 +290,77 @@
         <el-button type="primary" @click="saveSchoolInfo">确 定</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog
+      :title="updateBindFlag ? '修改单位信息' : '绑定单位信息'"
+      :visible.sync="bindCompanyDeptVisible"
+      width="400px"
+      :before-close="handleBindCompanyDeptClose"
+    >
+      <el-form
+        ref="bindCompanyDeptForm"
+        :rules="bindCompanyDeptRules"
+        :model="companyDeptInfo"
+        label-width="80px"
+      >
+        <el-form-item prop="companyId" label="单位">
+          <el-select
+            v-model="companyDeptInfo.companyId"
+            filterable
+            remote
+            :remote-method="getCompanyList"
+            placeholder="请输入单位名称进行搜索"
+            @change="findCompanyFirstLevelDepts"
+          >
+            <el-option
+              v-for="item in companyList"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item prop="companyId" label="部门">
+          <el-select
+            v-model="companyDeptInfo.deptId"
+            filterable
+            :remote-method="getCompanyList"
+            placeholder="请选择部门"
+          >
+            <el-option
+              v-for="item in deptList"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="handleBindCompanyDeptClose">取 消</el-button>
+        <el-button type="primary" @click="saveBindCompanyDept">确 定</el-button>
+      </span>
+
+    </el-dialog>
   </div>
 </template>
 
 <script>
 
-import { addSchoolInfo, deleteSchoolInfo, getInfo, pageList, updateSchoolInfo } from '@/api/schoolInfo'
+import {
+  addSchoolInfo,
+  bindCompanyDeptInfo,
+  deleteSchoolInfo,
+  getInfo,
+  pageList,
+  updateBindCompanyDeptInfo,
+  updateSchoolInfo
+} from '@/api/schoolInfo'
 import { mapGetters } from 'vuex'
+import { getCompanyList } from '@/api/company'
+import { findCompanyFirstLevelDepts } from '@/api/dept'
 
 export default {
   name: 'SchoolInfo',
@@ -292,6 +370,18 @@ export default {
       uploadUrl: `${process.env.VUE_APP_BASE_API}/upload`,
       inputVisible: false,
       inputValue: '',
+      bindCompanyDeptVisible: false,
+      companyList: [],
+      // 修改绑定标识
+      updateBindFlag: false,
+      companyDeptInfo: {
+        id: null,
+        companyId: null,
+        deptId: null,
+        companyName: null,
+        deptName: null
+      },
+      deptList: [],
       tags: [
         '985',
         '211',
@@ -324,6 +414,15 @@ export default {
         limit: 10,
         name: null
       },
+      bindCompanyDeptRules: {
+        deptId: [
+          { required: true, message: '请选择部门', trigger: 'blur' }
+        ],
+        companyId: [
+          { required: true, message: '请选择单位', trigger: 'blur' }
+
+        ]
+      },
       schoolInfoRules: {
         name: [
           { required: true, message: '请输入学校名称', trigger: 'blur' }
@@ -343,6 +442,64 @@ export default {
     ...mapGetters(['token'])
   },
   methods: {
+    saveBindCompanyDept() {
+      this.$refs.bindCompanyDeptForm.validate(async(valid) => {
+        if (!valid) {
+          return false
+        }
+
+        const deptName = this.deptList.find(item => item.id === this.companyDeptInfo.deptId).name
+        const companyName = this.companyList.find(item => item.id === this.companyDeptInfo.companyId).name
+
+        this.companyDeptInfo.companyName = companyName
+        this.companyDeptInfo.deptName = deptName
+
+        this.updateBindFlag ? await updateBindCompanyDeptInfo(this.companyDeptInfo) : await bindCompanyDeptInfo(this.companyDeptInfo)
+        this.$message.success('操作成功')
+        this.handleBindCompanyDeptClose()
+        await this.getList()
+      })
+    },
+    async findCompanyFirstLevelDepts() {
+      if (!this.companyDeptInfo.companyId) {
+        this.deptList = []
+        return false
+      }
+
+      const result = await findCompanyFirstLevelDepts({ companyId: this.companyDeptInfo.companyId })
+      this.deptList = result.data
+    },
+    async getCompanyList(name) {
+      if (!name) {
+        return
+      }
+
+      const data = {
+        name,
+        status: '3,4'
+      }
+      const result = await getCompanyList(data)
+      this.companyList = result.data
+    },
+    openBindCompanyDeptPage(data, updateBindFlag) {
+      this.companyDeptInfo.id = data.id
+      this.updateBindFlag = updateBindFlag
+
+      if (data.companyId) {
+        this.companyList.push({ id: data.companyId, name: data.companyName })
+        this.companyDeptInfo.deptId = data.deptId
+        this.companyDeptInfo.companyId = data.companyId
+        this.findCompanyFirstLevelDepts()
+      }
+
+      this.bindCompanyDeptVisible = true
+    },
+    handleBindCompanyDeptClose() {
+      this.bindCompanyDeptVisible = false
+      this.companyDeptInfo = {}
+      this.companyList = []
+      this.deptList = []
+    },
     openSchoolPage() {
       this.schoolInfo = {}
       this.dialogVisible = true
