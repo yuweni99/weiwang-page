@@ -337,7 +337,12 @@ export default {
     },
     handleBindSchoolClose() {
       this.bindSchoolDialogVisible = false
-      this.bindSchoolInfo = {}
+      this.bindSchoolInfo = {
+        id: null,
+        schoolId: null,
+        schoolName: null,
+        schoolBindType: null
+      }
       this.schoolInfos = []
     },
     handleDeptApplicationClose() {

@@ -63,3 +63,27 @@ export function updateBindCompanyDeptInfo(data) {
   })
 }
 
+export function updateStatus(data) {
+  return request({
+    url: '/console/schoolInfo/updateStatus',
+    method: 'get',
+    params: data
+  })
+}
+
+export function findHistoryNames(id) {
+  return request({
+    url: '/console/schoolInfo/findHistoryNames',
+    method: 'get',
+    params: { id }
+  })
+}
+
+export function saveHistoryNames(data) {
+  return request({
+    url: '/console/schoolInfo/saveHistoryNames',
+    method: 'post',
+    data
+  })
+}
+
