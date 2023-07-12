@@ -103,10 +103,30 @@
         </el-select>
       </el-form-item>
 
+      <el-form-item label="是否开启">
+        <el-select
+          v-model="queryParams.status"
+          filterable
+          clearable
+          size="mini"
+          allow-create
+          default-first-option
+          placeholder="请选择开启状态"
+        >
+          <el-option
+            v-for="item in statues"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+
       <el-form-item>
         <el-button size="mini" type="primary" @click="search">搜索</el-button>
         <el-button size="mini" type="info" @click="reset">重置</el-button>
-        <el-button size="mini" type="primary" @click="openSchoolPage">添加学校</el-button>
+        <el-button size="mini" type="primary" @click="openSchoolPage()">添加学校</el-button>
+        <el-button size="mini" type="primary" @click="openSuspensionSchoolPage()">停办学校</el-button>
       </el-form-item>
 
     </el-form>
@@ -161,7 +181,7 @@
         <template v-slot="scope">
           <el-button
             size="mini"
-            @click="getInfo(scope.row.id, false)"
+            @click="openSchoolPage(scope.row.id, false)"
           >修改
           </el-button>
           <el-button
@@ -178,7 +198,7 @@
           </el-button>
           <el-button
             size="mini"
-            @click="getInfo(scope.row.id, true)"
+            @click="openSchoolPage(scope.row.id, true)"
           >详情
           </el-button>
           <el-button
@@ -200,6 +220,7 @@
     />
 
     <el-dialog
+      v-if="dialogVisible"
       :title="descFlag? '学校详情' : (schoolInfo.id ? '修改学校' : '新增学校')"
       :visible.sync="dialogVisible"
       :close-on-click-modal="false"
@@ -207,279 +228,8 @@
       append-to-body
       :before-close="handleClose"
     >
-      <el-form
-        ref="schoolInfoForm"
-        :disabled="descFlag"
-        :rules="schoolInfoRules"
-        :model="schoolInfo"
-        label-width="80px"
-      >
-
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="logo地址" prop="logoUrl">
-              <el-upload
-                class="avatar-uploader"
-                :action="uploadUrl"
-                :show-file-list="false"
-                :data="{
-                  'type': 'school-logo',
-                  access_token: token,
-                }"
-                :on-success="handleLogoSuccess"
-                :before-upload="beforeLogoUpload"
-              >
-                <img v-if="schoolInfo.logoUrl" :src="schoolInfo.logoUrl" class="avatar">
-                <i v-else class="el-icon-plus avatar-uploader-icon" />
-              </el-upload>
-
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="学校名称" prop="name">
-              <el-input v-model="schoolInfo.name" size="mini" placeholder="请输入学校名称" clearable />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="官网">
-              <el-input
-                v-model="schoolInfo.officialWebsite"
-                size="mini"
-                placeholder="请输入地址"
-                clearable
-              />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="排名" prop="ranking">
-              <el-input v-model="schoolInfo.ranking" type="number" size="mini" placeholder="请输入排名" clearable />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="统一信用代码">
-              <el-input
-                v-model="schoolInfo.unifiedCreditCode"
-                size="mini"
-                placeholder="请输入统一信用代码码"
-                clearable
-              />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="24">
-            <el-form-item label="简单标签">
-              <el-select
-                v-model="selectTags"
-                class="select-tag"
-                multiple
-                filterable
-                size="mini"
-                allow-create
-                default-first-option
-                placeholder="请选择标签"
-              >
-                <el-option
-                  v-for="item in tags"
-                  :key="item"
-                  :label="item"
-                  :value="item"
-                />
-              </el-select>
-
-            </el-form-item>
-
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="院校代码">
-              <el-input v-model="schoolInfo.code" size="mini" placeholder="请输入院校代码" clearable />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="类别">
-              <el-input
-                v-model="schoolInfo.category"
-                size="mini"
-                placeholder="请输入类别"
-                clearable
-              />
-            </el-form-item>
-
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="世界排名">
-              <el-input
-                v-model="schoolInfo.worldRankings"
-                size="mini"
-                placeholder="请输入简单标签"
-                clearable
-              />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="学校简称">
-              <el-input v-model="schoolInfo.shortName" size="mini" placeholder="请输入学校简称" clearable />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="英语名称">
-              <el-input v-model="schoolInfo.englishName" size="mini" placeholder="请输入英语名称" clearable />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="省份">
-              <el-input v-model="schoolInfo.province" size="mini" placeholder="请输入省份" clearable />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="市">
-              <el-input v-model="schoolInfo.city" size="mini" placeholder="请输入市" clearable />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="创建年份">
-              <el-input
-                v-model="schoolInfo.createYear"
-                type="number"
-                size="mini"
-                placeholder="请输入创建年份市"
-                clearable
-              />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="校训">
-              <el-input
-                v-model="schoolInfo.schoolMotto"
-                size="mini"
-                placeholder="请输入校训"
-                clearable
-              />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="学校类型">
-              <el-select
-                v-model="selectSchoolTypes"
-                multiple
-                style="width: 300px"
-                size="mini"
-                placeholder="请选择学校类型"
-              >
-                <el-option
-                  v-for="item in schoolTypes"
-                  :key="item"
-
-                  :label="item"
-                  :value="item"
-                />
-              </el-select>
-
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="自然类型">
-              <el-select
-                v-model="selectNaturalTypes"
-                multiple
-                style="width: 300px"
-                size="mini"
-                placeholder="请选择自然类型"
-              >
-                <el-option
-                  v-for="item in naturalTypes"
-                  :key="item"
-
-                  :label="item"
-                  :value="item"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="所属机构">
-              <el-input
-                v-model="schoolInfo.affiliatedInstitution"
-                size="mini"
-                placeholder="请输入所属机构"
-                clearable
-              />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="是否私立">
-              <el-select v-model="schoolInfo.privateStatus" size="mini" placeholder="请选择是否私立">
-                <el-option
-                  v-for="item in statues"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="办学性质">
-              <el-select
-                v-model="selectEducationNatures"
-                style="width: 300px"
-                multiple
-                filterable
-                size="mini"
-                allow-create
-                default-first-option
-                placeholder="请选择办学性质"
-              >
-                <el-option
-                  v-for="item in educationNatures"
-                  :key="item"
-                  :label="item"
-                  :value="item"
-                />
-              </el-select>
-
-            </el-form-item>
-
-          </el-col>
-
-          <el-col v-for="(item,index) in addresses" :ke="item.value" :span="24">
-            <el-form-item class="address-container" label="地址">
-              <el-input
-                v-model="item.value"
-                size="mini"
-                placeholder="请输入地址"
-                clearable
-              />
-              <i class="el-icon-plus" @click="addresses.push({value: ''})" />
-              <i class="el-icon-minus" @click="addresses.splice(index, 1)" />
-            </el-form-item>
-
-          </el-col>
-
-        </el-row>
-
-      </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="handleClose">取 消</el-button>
-        <el-button type="primary" @click="saveSchoolInfo">确 定</el-button>
-      </span>
+      <EditSchoolInfo :id="id" :handle-close="handleClose" :desc-flag="descFlag" />
+      <span slot="footer" class="dialog-footer" />
     </el-dialog>
 
     <el-dialog
@@ -539,10 +289,23 @@
     <el-dialog
       v-if="updateHistoryNameVisible"
       title="修改历史名称"
+      :close-on-click-modal="false"
       :visible.sync="updateHistoryNameVisible"
       width="50%"
     >
       <school-history-name :id="id" :update-history-name-visible.sync="updateHistoryNameVisible" />
+    </el-dialog>
+
+    <el-dialog
+      v-if="suspensionSchoolVisible"
+      title="停办学校"
+      :close-on-click-modal="false"
+      :visible.sync="suspensionSchoolVisible"
+    >
+      <SuspensionSchool />
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="suspensionSchoolVisible = false">关闭</el-button>
+      </span>
     </el-dialog>
   </div>
 </template>
@@ -550,33 +313,30 @@
 <script>
 
 import {
-  addSchoolInfo,
   bindCompanyDeptInfo,
   deleteSchoolInfo,
-  getInfo,
   pageList,
   updateBindCompanyDeptInfo,
-  updateSchoolInfo,
   updateStatus
 } from '@/api/schoolInfo'
-import { mapGetters } from 'vuex'
 import { getCompanyList } from '@/api/company'
 import { findCompanyFirstLevelDepts } from '@/api/dept'
 
 import SchoolHistoryName from '@/views/schoolInfo/compoents/SchoolHistoryName.vue'
+import EditSchoolInfo from '@/views/schoolInfo/compoents/EditSchoolInfo.vue'
+import SuspensionSchool from '@/views/schoolInfo/compoents/SuspensionSchool.vue'
 
 import provinces from '@/assets/provinces.json'
 
 export default {
   name: 'SchoolInfo',
   components: {
-    SchoolHistoryName
+    SchoolHistoryName,
+    EditSchoolInfo,
+    SuspensionSchool
   },
   data() {
     return {
-      id: null,
-      updateHistoryNameVisible: false,
-      categories: ['本科', '专科'],
       naturalTypes: [
         '成人高等学院独立学院高等学校分校',
         '大学',
@@ -589,31 +349,7 @@ export default {
         '全日制公办普通高等职业院校',
         '学院'
       ],
-      provinces,
-      addresses: [],
-      selectNaturalTypes: [],
-      descFlag: false,
-      uploadUrl: `${process.env.VUE_APP_BASE_API}/upload`,
-      inputVisible: false,
-      inputValue: '',
-      bindCompanyDeptVisible: false,
-      companyList: [],
-      // 修改绑定标识
-      updateBindFlag: false,
-      companyDeptInfo: {
-        id: null,
-        companyId: null,
-        deptId: null,
-        companyName: null,
-        deptName: null
-      },
-      deptList: [],
-      selectEducationNatures: [],
-      educationNatures: [
-        '公立大学',
-        '公办大学',
-        '二级学院'
-      ],
+      categories: ['本科', '专科'],
       schoolTypes: [
         '财经',
         '军事',
@@ -646,6 +382,25 @@ export default {
         '一流大学建设B类',
         '一流学科建设'
       ],
+      id: null,
+      updateHistoryNameVisible: false,
+      provinces,
+      descFlag: false,
+      suspensionSchoolVisible: false,
+      inputVisible: false,
+      inputValue: '',
+      bindCompanyDeptVisible: false,
+      companyList: [],
+      // 修改绑定标识
+      updateBindFlag: false,
+      companyDeptInfo: {
+        id: null,
+        companyId: null,
+        deptId: null,
+        companyName: null,
+        deptName: null
+      },
+      deptList: [],
       statues: [
         { label: '是', value: '1' },
         { label: '否', value: '0' }
@@ -659,8 +414,6 @@ export default {
         unifiedCreditCode: null,
         address: null
       },
-      selectTags: [],
-      selectSchoolTypes: [],
       loading: false,
       total: 0,
       queryParams: {
@@ -670,7 +423,8 @@ export default {
         tag: null,
         page: 1,
         limit: 10,
-        name: null
+        name: null,
+        suspensionStatus: '0'
       },
       bindCompanyDeptRules: {
         deptId: [
@@ -678,17 +432,6 @@ export default {
         ],
         companyId: [
           { required: true, message: '请选择单位', trigger: 'blur' }
-
-        ]
-      },
-      schoolInfoRules: {
-        name: [
-          { required: true, message: '请输入学校名称', trigger: 'blur' }
-        ],
-        logoUrl: [
-          { required: true, message: '请上传图标', trigger: 'blur' }
-        ], ranking: [
-          { required: true, message: '请输入排名', trigger: 'blur' }
         ]
       }
     }
@@ -696,10 +439,11 @@ export default {
   mounted() {
     this.getList()
   },
-  computed: {
-    ...mapGetters(['token'])
-  },
+
   methods: {
+    openSuspensionSchoolPage() {
+      this.suspensionSchoolVisible = true
+    },
     openUpdateHistoryName(id) {
       this.id = id
       this.updateHistoryNameVisible = true
@@ -768,8 +512,12 @@ export default {
       this.companyList = []
       this.deptList = []
     },
-    openSchoolPage() {
-      this.schoolInfo = {}
+    openSchoolPage(id = null, flag = false) {
+      if (id) {
+        this.id = id
+        this.descFlag = flag
+      }
+
       this.dialogVisible = true
     },
     async deleteSchoolInfo(data) {
@@ -777,44 +525,6 @@ export default {
       await deleteSchoolInfo(data.id)
       this.$message.success('操作成功')
       this.getList()
-    },
-    saveSchoolInfo() {
-      this.$refs.schoolInfoForm.validate(async(valid) => {
-        if (!valid) {
-          return false
-        }
-
-        this.schoolInfo.tag = this.selectTags.join(',')
-        this.schoolInfo.type = this.selectSchoolTypes.join(',')
-        this.schoolInfo.naturalType = this.selectNaturalTypes.join(',')
-        this.schoolInfo.educationNature = this.selectEducationNatures.join(',')
-        this.schoolInfo.address = this.addresses.map(item => item.value).join(',')
-        !this.schoolInfo.id ? await addSchoolInfo(this.schoolInfo) : await updateSchoolInfo(this.schoolInfo)
-        this.$message.success('操作成功')
-        this.handleClose()
-        await this.getList()
-      })
-    },
-    handleLogoSuccess(res) {
-      const { errno, data } = res
-
-      if (errno === 1) {
-        this.$message.error('上传失败')
-        return
-      }
-      this.$set(this.schoolInfo, 'logoUrl', data.url)
-    },
-    beforeLogoUpload(file) {
-      const isJPG = file.type === 'image/jpeg'
-      const isLt2M = file.size / 1024 / 1024 < 2
-
-      if (!isJPG) {
-        this.$message.error('上传图片只能是 JPG 格式!')
-      }
-      if (!isLt2M) {
-        this.$message.error('上传图片大小不能超过 2MB!')
-      }
-      return isJPG && isLt2M
     },
 
     showInput() {
@@ -824,13 +534,13 @@ export default {
       })
     },
 
-    handleClose() {
+    handleClose(refreshFlag = false) {
       this.dialogVisible = false
-      this.schoolInfo = {}
-      this.selectTags = []
-      this.selectSchoolTypes = []
-      this.selectNaturalTypes = []
-      this.selectEducationNatures = []
+      this.id = null
+      this.descFlag = false
+      if (refreshFlag) {
+        this.getList()
+      }
     },
     search() {
       this.queryParams.page = 1
@@ -845,30 +555,7 @@ export default {
 
       this.getList()
     },
-    async getInfo(id, descFlag) {
-      const result = await getInfo(id)
-      this.schoolInfo = result.data
 
-      if (this.schoolInfo.tag) {
-        this.selectTags = this.schoolInfo.tag.replaceAll(' ', ',').split(',').filter(item => item) || []
-      }
-
-      if (this.schoolInfo.type) {
-        this.selectSchoolTypes = this.schoolInfo.type.split(',').filter(item => item) || []
-      }
-      if (this.schoolInfo.naturalType) {
-        this.selectNaturalTypes = this.schoolInfo.naturalType.split(',').filter(item => item) || []
-      }
-      if (this.schoolInfo.educationNature) {
-        this.selectEducationNatures = this.schoolInfo.educationNature.split(',').filter(item => item) || []
-      }
-      if (this.schoolInfo.address) {
-        this.addresses = this.schoolInfo.address.split(',').map(item => ({ value: item })) || []
-      }
-
-      this.descFlag = descFlag
-      this.dialogVisible = true
-    },
     async getList() {
       try {
         this.loading = true
@@ -886,37 +573,4 @@ export default {
 }
 </script>
 
-<style scoped lang="scss">
-.select-tag {
-  display: block;
-}
-
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-  width: 178px;
-  height: 178px;
-  line-height: 178px;
-  text-align: center;
-}
-
-.avatar {
-  width: 178px;
-  height: 178px;
-  display: block;
-}
-
-.address-container {
-  .el-input {
-    width: 90%;
-  }
-
-  i {
-    font-size: 20px;
-    margin-left: 10px;
-    //border: 1px solid #000000;
-  }
-
-}
-
-</style>
+<style scoped lang="scss"></style>

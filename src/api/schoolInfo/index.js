@@ -1,5 +1,4 @@
 import request from '@/utils/request'
-import qs from 'qs'
 
 export function pageList(query) {
   return request({
@@ -21,10 +20,7 @@ export function addSchoolInfo(data) {
   return request({
     url: '/console/schoolInfo/add',
     method: 'post',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-    },
-    data: qs.stringify(data)
+    data
   })
 }
 
@@ -32,10 +28,7 @@ export function updateSchoolInfo(data) {
   return request({
     url: '/console/schoolInfo/update',
     method: 'post',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-    },
-    data: qs.stringify(data)
+    data
   })
 }
 
