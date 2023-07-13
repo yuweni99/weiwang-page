@@ -88,6 +88,12 @@
         </el-col>
 
         <el-col :span="12">
+          <el-form-item label="学校标识码">
+            <el-input v-model="schoolInfo.identifier" size="mini" placeholder="请输入学校标识码" clearable />
+          </el-form-item>
+        </el-col>
+
+        <el-col :span="12">
           <el-form-item label="院校代码">
             <el-input v-model="schoolInfo.code" size="mini" placeholder="请输入院校代码" clearable />
           </el-form-item>

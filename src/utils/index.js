@@ -118,3 +118,16 @@ export function param2Obj(url) {
   return obj
 }
 
+export function debounce(func, delay) {
+  let timer = null
+
+  return function() {
+    const context = this
+    const args = arguments
+
+    clearTimeout(timer)
+    timer = setTimeout(function() {
+      func.apply(context, args)
+    }, delay)
+  }
+}

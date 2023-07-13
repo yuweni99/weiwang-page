@@ -158,6 +158,16 @@
           <span @click="openUpdateHistoryName(scope.row.id)">{{ scope.row.name }}</span>
         </template>
       </el-table-column>
+
+      <el-table-column label="学校类型">
+        <template v-slot="scope">
+          <div v-if="scope.row.type">
+            <el-tag v-for="(item,index ) in scope.row.type.split(',') || []" :index="index" type="success">{{ item }}
+            </el-tag>
+          </div>
+
+        </template>
+      </el-table-column>
       <el-table-column label="开启状态" width="100px">
         <template v-slot="scope">
           <el-switch
@@ -174,6 +184,7 @@
       <el-table-column label="简称" prop="shortName" />
       <el-table-column label="学校编码" prop="code" />
       <el-table-column label="排名" prop="ranking" />
+      <el-table-column label="创建年份" prop="createYear" />
       <el-table-column label="所在省" prop="province" />
       <el-table-column label="所在市区" prop="city" />
 

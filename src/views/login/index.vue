@@ -50,8 +50,8 @@ export default {
     }
   },
   created() {
-    this.$store.dispatch('user/autoLogin', { token: 'fa04d5d7cde447878afb5078f8c8f9a4', userId: 1000 })
-    // this.getQrCodeLoginKey()
+    // this.$store.dispatch('user/autoLogin', { token: 'fa04d5d7cde447878afb5078f8c8f9a4', userId: 1000 })
+    this.getQrCodeLoginKey()
   },
   destroyed() {
     // 清理定时器

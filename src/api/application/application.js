@@ -32,3 +32,11 @@ export function deleteApplication(id) {
   })
 }
 
+export function setManager(data) {
+  return request({
+    url: '/console/application/setManager',
+    method: 'post',
+    data
+  })
+}
+

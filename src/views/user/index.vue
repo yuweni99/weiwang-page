@@ -287,6 +287,14 @@
           />
         </el-form-item>
 
+        <el-form-item label="籍贯" prop="origin">
+          <el-input
+            v-model="user.origin"
+            clearable
+            placeholder="请输入籍贯"
+          />
+        </el-form-item>
+
         <!--        <el-form-item v-if="user.userId" label="微网账号" prop="account">-->
         <!--          <el-input-->
         <!--            v-model="user.account"-->

@@ -93,6 +93,12 @@
           <el-button
             size="mini"
             type="text"
+            @click="openSetManagerDialog(scope.row)"
+          >设置管理员
+          </el-button>
+          <el-button
+            size="mini"
+            type="text"
             @click="openEditApplicationDialog(scope.row)"
           >修改
           </el-button>
@@ -231,13 +237,44 @@
         <el-button type="primary" @click="saveApplication">确 定</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog
+      title="设置管理员"
+      :visible.sync="setManagerDialogVisible"
+      width="30%"
+      append-to-body
+      :before-close="handleSetManagerClose"
+    >
+      <el-form ref="setManagerForm" :rules="setManagerRules" :model="setManagerObj" label-width="80px">
+        <el-form-item label="手机号" prop="managerMobile">
+          <el-input
+            v-model="setManagerObj.managerMobile"
+            placeholder="请输入手机号"
+            @input="findInfoByMobile"
+            @keyup.enter.native="findInfoByMobile()"
+          />
+        </el-form-item>
+        <el-form-item label="用户名" prop="managerUserName">
+          <el-input v-model="setManagerObj.managerUserName" disabled placeholder="请输入用户名" />
+        </el-form-item>
+        <!--        <el-form-item label="用户id" prop="managerUserId">
+                  <el-input v-model="setManagerObj.managerUserId" disabled placeholder="请输入用户id" />
+                </el-form-item>-->
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="handleSetManagerClose">取 消</el-button>
+        <el-button type="primary" @click="saveSetManager">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { addApplication, deleteApplication, list, updateApplication } from '@/api/application/application'
+import { addApplication, deleteApplication, list, setManager, updateApplication } from '@/api/application/application'
 import { list as listClassify } from '@/api/application/classify'
 import { mapGetters } from 'vuex'
+import { debounce } from '@riophae/vue-treeselect/src/utils'
+import { findInfoByMobile } from '@/api/user'
 
 export default {
   name: 'Application',
@@ -256,8 +293,14 @@ export default {
         { label: '开启', value: '1' }
       ],
       classifies: [],
+      setManagerObj: {
+        managerMobile: null,
+        managerUserId: null,
+        managerUserName: null
+      },
       uploadUrl: `${process.env.VUE_APP_BASE_API}/upload`,
       dialogVisible: false,
+      setManagerDialogVisible: false,
       loading: false,
       applicationForm: {
         id: null,
@@ -278,10 +321,22 @@ export default {
         followOfficialAccountStatus: null
       },
       applications: [],
+      application: {},
       queryParams: {
         name: null,
         classifyId: this.$route.query.classifyId,
         trialStatus: null
+      },
+      setManagerRules: {
+        managerUserId: [
+          { required: true, message: '用户id不能为空', trigger: 'blur' }
+        ],
+        managerUserName: [
+          { required: true, message: '用户姓名不能为空', trigger: 'blur' }
+        ],
+        managerMobile: [
+          { required: true, message: '用户手机号不能为空', trigger: 'blur' }
+        ]
       },
       applicationFormRules: {
         name: [
@@ -322,6 +377,46 @@ export default {
     this.getListClassify()
   },
   methods: {
+    async saveSetManager() {
+      this.$refs.setManagerForm.validate(async(valid) => {
+        if (!valid) {
+          return false
+        }
+
+        this.setManagerObj.id = this.application.id
+        await setManager(this.setManagerObj)
+
+        this.$message.success('操作成功')
+        this.handleSetManagerClose()
+        await this.getList()
+      })
+    },
+    findInfoByMobile: debounce(async function() {
+      if (!this.setManagerObj || !this.setManagerObj.managerMobile) {
+        this.setManagerObj.managerUserId = null
+        this.setManagerObj.managerUserName = null
+        return
+      }
+
+      const result = await findInfoByMobile({ mobile: this.setManagerObj.managerMobile })
+      const user = result.data || {}
+
+      if (!user.userId) {
+        this.setManagerObj.managerUserId = null
+        this.setManagerObj.managerUserName = null
+        return
+      }
+
+      this.setManagerObj.managerUserId = user.userId
+      this.setManagerObj.managerUserName = user.authName
+    }, 500),
+    openSetManagerDialog(data) {
+      this.setManagerDialogVisible = true
+      this.application = data
+      this.setManagerObj.managerUserName = data.managerUserName
+      this.setManagerObj.managerUserId = data.managerUserId
+      this.setManagerObj.managerMobile = data.managerMobile
+    },
     goToDeptApplicationPage(data) {
       if (!data.number) {
         return
@@ -406,6 +501,11 @@ export default {
         this.handleApplicationClose()
         await this.getList()
       })
+    },
+    handleSetManagerClose() {
+      this.setManagerDialogVisible = false
+      this.setManagerObj = {}
+      this.application = {}
     },
     handleApplicationClose() {
       this.dialogVisible = false
